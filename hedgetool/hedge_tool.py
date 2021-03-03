@@ -35,10 +35,10 @@ class HEDGE:
         S = set(S)
 
         x_prime = np.tile(x, (4, 1))
-        x_prime[0, list(all_feature_sets - (S| j1 | j2))] = vocab['#']
-        x_prime[1, list(all_feature_sets - (S | j1))] = vocab['#']
-        x_prime[2, list(all_feature_sets - (S | j2))] = vocab['#']
-        x_prime[3, list(all_feature_sets - S)] = vocab['#']
+        x_prime[0, list(all_feature_sets - (S| j1 | j2))] = self.padding
+        x_prime[1, list(all_feature_sets - (S | j1))] = self.padding
+        x_prime[2, list(all_feature_sets - (S | j2))] = self.padding
+        x_prime[3, list(all_feature_sets - S)] = self.padding
         
         
         # only care about the interested category (given by `label`)
@@ -79,18 +79,11 @@ class HEDGE:
         
         # get the model prediction for the given encoded_sentence
         label = np.argmax(self.model.predict(np.expand_dims(encoded_sentence, axis=0))[0])
-        print(encoded_sentence)   
         
         padding_start_index = -1
 
         for i in range(self.max_length -1, 0, -1):
-            print(i)
             if encoded_sentence[i] != self.padding:
-                print(
-                    "i: {}, encoded_sentence: {}, padding: {} , not padding".format(
-                        i, encoded_sentence[i], self.padding
-                     )
-                )
                 padding_start_index = i
                 break
 
@@ -101,7 +94,6 @@ class HEDGE:
         P_history.append([list(range(padding_start_index + 1))])
 
         for step in range(1, padding_start_index + 1):
-            print("Step: {}".format(step))
             
             P = P_history[-1]
             # loop through all text span in P:
@@ -140,7 +132,7 @@ class HEDGE:
         """
         this function receives a list of spands and returns the contribution scores to the label
         """
-        masked_input = np.ones((len(spans), len(x)))*vocab['#']
+        masked_input = np.ones((len(spans), len(x)))*self.padding
 
         for i, span in enumerate(spans):
             masked_input[i, span]  = x[span]
