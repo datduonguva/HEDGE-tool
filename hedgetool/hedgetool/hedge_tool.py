@@ -172,5 +172,3 @@ class HEDGE:
             for j in range(max(P_history[0][0]) + 1):
                 ax.text(j-0.3, i, sentence[j])
         plt.show()
-
-
