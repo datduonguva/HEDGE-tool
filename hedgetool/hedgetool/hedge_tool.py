@@ -149,7 +149,7 @@ class HEDGE:
         return predicted_label_probs - other_probs
 
 
-    def visualize(self, sentence, P_history, contributions):
+    def visualize(self, sentence, tokenizer, P_history, contributions):
         """
         visualize the model's explanation
         """

@@ -4,7 +4,7 @@ import copy
 import tensorflow as tf
 import numpy as np
 
-from hedge_tool import HEDGE 
+from hedgetool import HEDGE 
 
 
 
