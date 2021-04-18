@@ -34,8 +34,6 @@ def build_model():
     return model
 
 
-
-
 def main():
     tf.keras.backend.clear_session()
     model = build_model()
@@ -48,10 +46,4 @@ def main():
     model.summary()
     tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
 
-    while True:
-        sentence = input("your sentence: ")
-        inputs = tokenizer([sentence], padding=True, return_tensors='np')
-        print(model.predict([inputs['input_ids'], inputs['attention_mask']]))
-
-if __name__ == '__main__':
-    main()
+    sentence = 'sentence = 'i think the song sound very interesting'

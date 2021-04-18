@@ -1,7 +1,7 @@
 import setuptools
 
 setuptools.setup(
-    name="HEDGE-tool", # Replace with your own username
+    name="hedgetool", # Replace with your own username
     version="0.0.2",
     author="Dat Duong",
     author_email="dqd8tp@virginia.edu",
@@ -13,7 +13,6 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    package_dir={'hedgetool': ''},
-#    packages=setuptools.find_packages(where="hedgetool"),
+    packages=setuptools.find_packages(),
     python_requires=">=3.6",
 )
