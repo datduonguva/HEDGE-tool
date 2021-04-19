@@ -20,19 +20,29 @@ with open(os.path.join(DATA_PATH, "vocab.json"), "r") as f:
 
 def encode_sentence(sentence, max_length, padding=-1):
     return np.array(
-        (
-            [vocab.get(word, padding) for word in sentence.split(" ")] + [padding]*max_length
-        )[:max_length]
+        [
+            (
+                [vocab.get(word, padding) for word in sentence.split(" ")] + [padding]*max_length
+            )[:max_length]
+        ]
     )
 
 if __name__ == '__main__':
 
     model = tf.keras.models.load_model(MODEL_PATH)
 
+
     padding = vocab['#'] 
     max_length = 70
 
-    hedge = HEDGE(model, max_length, padding)
+    class MyHEDGE(HEDGE):
+        def __init__(self, *arg):
+            super(MyHEDGE, self).__init__(*arg)
+
+        def predict_prob(self, *inputs):
+            return self.model.predict(inputs[0])
+
+    hedge = MyHEDGE(model, max_length, padding)
 
     sentence = 'i think the song sound very interesting'
 
