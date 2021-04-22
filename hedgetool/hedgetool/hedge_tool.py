@@ -12,8 +12,9 @@ class HEDGE:
             model: Tensorflow's keras model
             max_length: The length of the sentence that is required by the model
             padding:    The index of the token that is used for padding the sentence to the
-                maximum length. It will also be the token used to mask the tokens when
-                calculating the text interaction scores and well as contribution scores
+            maximum length. It will also be the token used to mask the tokens when
+            calculating the text interaction scores and well as contribution scores
+            ids_to_token: (optional) a dictionary mapping encoded sentence back to text.
         """
         self.model = model
         self.padding = padding
@@ -77,9 +78,9 @@ class HEDGE:
 
     def main_algorithm(self, encoded_sentence):
         """
-        encoded_sentence: a python list (or 1-D Numpy array)
+        encoded_sentence: a 2-D numpy array of shapep (1, None)
         """
-
+        
         # get the model prediction for the given encoded_sentence
         label = np.argmax(self.predict_prob(encoded_sentence)[0])
         
@@ -149,7 +150,6 @@ class HEDGE:
         other_probs = np.max(outputs, axis=1)
         
         return predicted_label_probs - other_probs
-
 
     def visualize(self, encoded_sentence, P_history, contributions):
         """
