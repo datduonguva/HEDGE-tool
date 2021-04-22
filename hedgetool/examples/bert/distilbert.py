@@ -8,6 +8,10 @@ from hedgetool import HEDGE
 MODEL_ROOT = "/home/datduong/gdrive/projects/c12_distilBERT/02"
 
 def build_model():
+    """
+    This model is build based upon the DistilBert model taken from the Huggingface's Transformer library
+    The model has to be compiled before weight loading.
+    """
     pretrained_model = TFDistilBertModel.from_pretrained(
         'distilbert-base-uncased', output_attentions=False
     )
@@ -36,7 +40,13 @@ def build_model():
 
 
 def main():
-    
+    """
+    To generate the Hierachical Explaination of a model, please extend the HEDGE class and
+    overwrite the `predict_prob` method to return the softmax output given the encoded
+    input
+
+    This step is different for each model.
+    """
     # build the model and load the pretrain weights 
     tf.keras.backend.clear_session()
     model = build_model()
