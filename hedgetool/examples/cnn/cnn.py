@@ -39,15 +39,15 @@ if __name__ == '__main__':
         def __init__(self, *arg):
             super(MyHEDGE, self).__init__(*arg)
 
-        def predict_prob(self, *inputs):
-            return self.model.predict(inputs[0])
+        def predict_prob(self, encoded_sentence):
+            return self.model.predict(encoded_sentence)
 
-    hedge = MyHEDGE(model, max_length, padding)
+    ids_to_tokens = {i:k for k, i in vocab.items()}
+    hedge = MyHEDGE(model, max_length, padding, ids_to_tokens)
 
     sentence = 'i think the song sound very interesting'
 
     encoded_sentence = encode_sentence(sentence, max_length, padding)
-
     P_history, spans, contributions = hedge.main_algorithm(encoded_sentence)
     
-    hedge.visualize(sentence, P_history, contributions)
+    hedge.visualize(encoded_sentence, P_history, contributions)

@@ -3,6 +3,7 @@ import numpy as np
 import tensorflow as tf
 import json
 from transformers import DistilBertTokenizer, TFDistilBertModel
+from hedgetool import HEDGE
 
 MODEL_ROOT = "/home/datduong/gdrive/projects/c12_distilBERT/02"
 
@@ -35,6 +36,8 @@ def build_model():
 
 
 def main():
+    
+    # build the model and load the pretrain weights 
     tf.keras.backend.clear_session()
     model = build_model()
     model.compile(
@@ -43,7 +46,45 @@ def main():
         metrics=["acc"],
     )
     model.load_weights(MODEL_ROOT)
-    model.summary()
+
+    # get the pretrained tokenizer
     tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
 
-    sentence = 'sentence = 'i think the song sound very interesting'
+    # this is the string of interest
+    sentence = ['i think the song sound very interesting']
+    encoded_sentence = tokenizer(sentence, return_tensors='np')['input_ids'][0:1, 1:-1]
+
+    max_length = len(encoded_sentence[0])
+    padding = 0
+
+
+    # extend the HEDGE class and define how to make the inference based on the encoded input
+    class MyHEDGE(HEDGE):
+        def __init__(self, *arg):
+            super(MyHEDGE, self).__init__(*arg)
+
+        def predict_prob(self, encoded_sentence):
+
+            # For Bert-type of model, encoded sentence must be prepended with a [CLS] token
+            # and appended with a [PAD] token
+
+            # index for [CLS] is 101, index for [PAD] is 102
+            encoded_sentence = np.hstack(
+                [
+                    np.array([101]*len(encoded_sentence)).reshape((-1, 1)),
+                    encoded_sentence,
+                    np.array([102]*len(encoded_sentence)).reshape((-1, 1))
+                ]
+            )
+            attention_mask = np.ones(encoded_sentence.shape)
+            return self.model.predict(
+                {'input_ids_pl': encoded_sentence, 'attention_mask_pl': attention_mask}
+            )
+
+    hedge = MyHEDGE(model, max_length, padding, tokenizer.ids_to_tokens)
+    P_history, spans, contributions = hedge.main_algorithm(encoded_sentence)
+    hedge.visualize(encoded_sentence, P_history, contributions)
+
+
+if __name__ == '__main__':
+    main()

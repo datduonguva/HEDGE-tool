@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class HEDGE:
-    def __init__(self, model, max_length, padding=-1):
+    def __init__(self, model, max_length, padding=-1, ids_to_token=None):
         """
         Args:
             model: Tensorflow's keras model
@@ -18,12 +18,13 @@ class HEDGE:
         self.model = model
         self.padding = padding
         self.max_length = max_length
+        self.ids_to_token = ids_to_token
 
-    def gamma(self, x, label, S, j1, j2):
+    def gamma(self, encoded_sentence, label, S, j1, j2):
         """
         model   : the keras model to make prediction
         label   : the categorical index of the prediction
-        x       : the encoded sentence
+        encoded_sentence       : the encoded sentence of shape (1, max_length)
         S, j1, j2 are lists  
         
         this implements equation 3
@@ -34,26 +35,21 @@ class HEDGE:
         j2 = set(j2)
         S = set(S)
 
-        if isinstance(x, tuple):
-            x_prime = np.tile(x[0], (4, 1))
-            x_prime[0, list(all_feature_sets - (S| j1 | j2))] = self.padding
-            x_prime[1, list(all_feature_sets - (S | j1))] = self.padding
-            x_prime[2, list(all_feature_sets - (S | j2))] = self.padding
-            x_prime[3, list(all_feature_sets - S)] = self.padding
-            
-            if len(x) == 2:
-                attention_mask = x[1]
-                attention_mask = np.tile(x[1], (4,1))
-                x_prime = (x_prime, attention_mask)
+        x_prime = np.tile(encoded_sentence, (4, 1))
+        x_prime[0, list(all_feature_sets - (S| j1 | j2))] = self.padding
+        x_prime[1, list(all_feature_sets - (S | j1))] = self.padding
+        x_prime[2, list(all_feature_sets - (S | j2))] = self.padding
+        x_prime[3, list(all_feature_sets - S)] = self.padding
+        
         # only care about the interested category (given by `label`)
         expectations = self.predict_prob(x_prime)[:, label]
         return expectations[0] - expectations[1] - expectations[2] + expectations[3]
        
-    def phi(self, x, label, P, j1, j2):
+    def phi(self, encoded_sentence, label, P, j1, j2):
         """
         P: a list of list
         j1, j2: each of them are list whose set(j1) | set(j2) belong to P
-        x: encoded_sentence
+        encoded_sentence: encoded_sentence of shape (1, sentence length)
         """
 
         N = [element for element in P if j1[0] != element[0]]
@@ -72,25 +68,25 @@ class HEDGE:
                 # S is a list of text spans
                 S_flatten = [token for spand in S for token in spand]
                 
-                score += weight*self.gamma(x, label, S_flatten, j1, j2)
+                score += weight*self.gamma(encoded_sentence, label, S_flatten, j1, j2)
 
         return score
 
-    def predict_prob(self, *inputs):
+    def predict_prob(self, *args, **kwargs):
         raise NotImplementedError("prediction function has not been implemented")
 
-    def main_algorithm(self, *inputs):
+    def main_algorithm(self, encoded_sentence):
         """
         encoded_sentence: a python list (or 1-D Numpy array)
         """
-        
+
         # get the model prediction for the given encoded_sentence
-        label = np.argmax(self.predict_prob(inputs)[0])
+        label = np.argmax(self.predict_prob(encoded_sentence)[0])
         
         padding_start_index = -1
 
         for i in range(self.max_length -1, 0, -1):
-            if inputs[0][i] != self.padding:
+            if encoded_sentence[0][i] != self.padding:
                 padding_start_index = i
                 break
 
@@ -115,7 +111,7 @@ class HEDGE:
                     j1 = span[:j]
                     j2 = span[j:]
 
-                    phi_value = self.phi(inputs, label, P, j1, j2)
+                    phi_value = self.phi(encoded_sentence, label, P, j1, j2)
 
                     if phi_value < min_phi_value:
                         min_phi_value = phi_value
@@ -131,7 +127,7 @@ class HEDGE:
             P_history.append(new_P)
 
         spans = [span for P in P_history for span in P]
-        contribution = self.get_contribution_score(inputs, spans, label)
+        contribution = self.get_contribution_score(encoded_sentence, spans, label)
 
         return P_history, spans, contribution
 
@@ -143,7 +139,6 @@ class HEDGE:
 
         for i, span in enumerate(spans):
             masked_input[i, span]  = x[0][span]
-        
 
         outputs = self.predict_prob(masked_input)
         predicted_label_probs = outputs[:, label].copy()
@@ -156,7 +151,7 @@ class HEDGE:
         return predicted_label_probs - other_probs
 
 
-    def visualize(self, sentence, P_history, contributions):
+    def visualize(self, encoded_sentence, P_history, contributions):
         """
         visualize the model's explanation
         """
@@ -172,11 +167,14 @@ class HEDGE:
                 for token in span:
                     scores[i, token] = span_contrib_mapping[span_str]
         ax = plt.gca()
-
-        sentence = sentence.split(" ")
+        
+        if self.ids_to_token != None:
+            tokens = [self.ids_to_token[i] for i in encoded_sentence[0]]
+        else:
+            tokens = [str(i) for i in encoded_sentence[0]]
         im = ax.imshow(scores, cmap="coolwarm")
         for i in range(len(P_history)):
             for j in range(max(P_history[0][0]) + 1):
-                ax.text(j-0.3, i, sentence[j])
+                ax.text(j-0.3, i, tokens[j])
         plt.show()
 
