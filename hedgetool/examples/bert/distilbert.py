@@ -5,7 +5,7 @@ import json
 from transformers import DistilBertTokenizer, TFDistilBertModel
 from hedgetool import HEDGE
 
-MODEL_ROOT = "/home/datduong/gdrive/projects/c12_distilBERT/02"
+MODEL_ROOT = input("your model path: ")
 
 def build_model():
     """

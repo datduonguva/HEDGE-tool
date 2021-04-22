@@ -7,15 +7,10 @@ import numpy as np
 from hedgetool import HEDGE 
 
 
+MODEL_PATH = input("your model path: ")
+VOCAB_PATH = input("your vocab path: ") 
 
-MODEL_PATH = "/home/datduong/gdrive/projects/c11_text_interaction/01/"
-DATA_PATH = (
-    "/home/datduong/gdrive/CS/ML/SST/archive/SST2-Data/"
-    "SST2-Data/stanfordSentimentTreebank/stanfordSentimentTreebank"
-)
-
-
-with open(os.path.join(DATA_PATH, "vocab.json"), "r") as f:
+with open(VOCAB_PATH, "r") as f:
     vocab = json.load(f)
 
 def encode_sentence(sentence, max_length, padding=-1):
